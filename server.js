@@ -32,9 +32,13 @@ app.post("/send-otp", async (req, res) => {
 
   otpStore[email] = {
     otp,
-    expires: Date.now() + 5 * 60 * 1000 // 5 min
+    expires: Date.now() + 5 * 60 * 1000
   };
 
+  // ✅ respond immediately
+  res.json({ success: true });
+
+  // 🔥 send email AFTER response
   try {
     await transporter.sendMail({
       from: "saikingfishr@gmail.com",
@@ -43,9 +47,10 @@ app.post("/send-otp", async (req, res) => {
       text: `Your OTP is ${otp}`
     });
 
-    res.json({ success: true });
+    console.log("OTP sent:", otp);
+
   } catch (err) {
-    res.status(500).json({ error: "Email failed" });
+    console.error("Email failed:", err);
   }
 });
 
