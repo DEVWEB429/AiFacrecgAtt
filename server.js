@@ -43,8 +43,7 @@ app.post("/send-otp", async (req, res) => {
   console.log("📩 Request received for:", email);
 
   if (!email) {
-    console.log("❌ No email provided");
-    return res.status(400).json({ success: false, error: "Email required" });
+    return res.status(400).json({ success: false });
   }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -56,8 +55,12 @@ app.post("/send-otp", async (req, res) => {
 
   console.log("🔐 Generated OTP:", otp);
 
+  // ✅ SEND RESPONSE IMMEDIATELY
+  res.json({ success: true });
+
+  // 🔥 SEND EMAIL IN BACKGROUND
   try {
-    console.log("🚀 Sending email via IPv4...");
+    console.log("🚀 Sending email...");
 
     const info = await transporter.sendMail({
       from: `"FaceRecgAI" <saikingfishr@gmail.com>`,
@@ -67,19 +70,10 @@ app.post("/send-otp", async (req, res) => {
       html: `<h2>Your OTP is: ${otp}</h2>`
     });
 
-    console.log("✅ MAIL SENT SUCCESSFULLY");
-    console.log("📨 SMTP RESPONSE:", info.response);
-
-    res.json({ success: true });
+    console.log("✅ MAIL SENT:", info.response);
 
   } catch (err) {
-    console.error("❌ EMAIL FAILED");
-    console.error("Error message:", err.message);
-
-    res.status(500).json({
-      success: false,
-      error: err.message
-    });
+    console.error("❌ EMAIL FAILED:", err.message);
   }
 });
 
