@@ -12,13 +12,24 @@ app.use(express.json());
 // 🔥 TEMP STORAGE (later DB)
 const otpStore = {};
 
-// 📧 EMAIL CONFIG
+// ✅ IPv4 FORCE
+const ipv4Lookup = (hostname, options, callback) => {
+  return dns.lookup(hostname, { family: 4 }, callback);
+};
+
+// ✅ FIXED transporter
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
   auth: {
-    user: "your_email@gmail.com",
-    pass: "otkt dnaj iqme skhi" // NOT normal password
-  }
+    user: "saikingfishr@gmail.com",
+    pass: "otktdnajiqmeskhi"
+  },
+  tls: {
+    rejectUnauthorized: false
+  },
+  lookup: ipv4Lookup
 });
 
 app.get("/", (req, res) => {
