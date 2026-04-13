@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const dns = require("dns");
 const nodemailer = require("nodemailer");
 
 const PORT = process.env.PORT || 3000;
@@ -45,7 +46,7 @@ app.post("/send-otp", async (req, res) => {
   console.log("🔐 Generated OTP:", otp);
 
   try {
-    console.log("🚀 Sending email...");
+    console.log("🚀 Sending email via IPv4...");
 
     const info = await transporter.sendMail({
       from: `"FaceRecgAI" <saikingfishr@gmail.com>`,
@@ -57,14 +58,12 @@ app.post("/send-otp", async (req, res) => {
 
     console.log("✅ MAIL SENT SUCCESSFULLY");
     console.log("📨 SMTP RESPONSE:", info.response);
-    console.log("📦 FULL INFO:", info);
 
     res.json({ success: true });
 
   } catch (err) {
     console.error("❌ EMAIL FAILED");
     console.error("Error message:", err.message);
-    console.error("Full error:", err);
 
     res.status(500).json({
       success: false,
