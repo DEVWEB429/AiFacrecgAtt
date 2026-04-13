@@ -28,6 +28,13 @@ app.get("/", (req, res) => {
 app.post("/send-otp", async (req, res) => {
   const { email } = req.body;
 
+  console.log("📩 Request received for:", email);
+
+  if (!email) {
+    console.log("❌ No email provided");
+    return res.status(400).json({ success: false, error: "Email required" });
+  }
+
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   otpStore[email] = {
@@ -35,22 +42,34 @@ app.post("/send-otp", async (req, res) => {
     expires: Date.now() + 5 * 60 * 1000
   };
 
-  // ✅ respond immediately
-  res.json({ success: true });
+  console.log("🔐 Generated OTP:", otp);
 
-  // 🔥 send email AFTER response
   try {
-    await transporter.sendMail({
-      from: "saikingfishr@gmail.com",
+    console.log("🚀 Sending email...");
+
+    const info = await transporter.sendMail({
+      from: `"FaceRecgAI" <saikingfishr@gmail.com>`,
       to: email,
       subject: "Your OTP Code",
-      text: `Your OTP is ${otp}`
+      text: `Your OTP is ${otp}`,
+      html: `<h2>Your OTP is: ${otp}</h2>`
     });
 
-    console.log("OTP sent:", otp);
+    console.log("✅ MAIL SENT SUCCESSFULLY");
+    console.log("📨 SMTP RESPONSE:", info.response);
+    console.log("📦 FULL INFO:", info);
+
+    res.json({ success: true });
 
   } catch (err) {
-    console.error("Email failed:", err);
+    console.error("❌ EMAIL FAILED");
+    console.error("Error message:", err.message);
+    console.error("Full error:", err);
+
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
   }
 });
 
