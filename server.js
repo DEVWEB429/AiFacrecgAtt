@@ -13,13 +13,14 @@ app.use(express.json());
 const otpStore = {};
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+  host: "74.125.200.108", // Gmail SMTP IPv4
   port: 587, // 🔥 CHANGE FROM 465 → 587
   secure: false, // TLS upgrade (more stable)
   auth: {
     user: "saikingfishr@gmail.com",
     pass: "otktdnajiqmeskhi"
   },
+  family: 4, // 🔥 FORCE IPv4
   requireTLS: true,
   tls: {
     rejectUnauthorized: false,
@@ -30,9 +31,9 @@ const transporter = nodemailer.createTransport({
   socketTimeout: 60000,
 
   // 🔥 FORCE IPv4 HARD
-  lookup: (hostname, options, callback) => {
-    return dns.lookup(hostname, { family: 4, all: false }, callback);
-  }
+  // lookup: (hostname, options, callback) => {
+  //   return dns.lookup(hostname, { family: 4, all: false }, callback);
+  // }
 });
 
 app.get("/", (req, res) => {
