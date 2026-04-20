@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const dns = require("dns");
-const nodemailer = require("nodemailer");
+const sgMail = require("@sendgrid/mail");
 
 const PORT = process.env.PORT || 3000;
 
@@ -9,45 +8,28 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 🔥 TEMP STORAGE (later DB)
+// 🔐 SendGrid setup
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+// 🔥 TEMP STORAGE (use Redis/DB in production)
 const otpStore = {};
 
-const transporter = nodemailer.createTransport({
-  host: "74.125.200.108", // Gmail SMTP IPv4
-  port: 587, // 🔥 CHANGE FROM 465 → 587
-  secure: false, // TLS upgrade (more stable)
-  auth: {
-    user: "saikingfishr@gmail.com",
-    pass: "otktdnajiqmeskhi"
-  },
-  family: 4, // 🔥 FORCE IPv4
-  requireTLS: true,
-  tls: {
-    rejectUnauthorized: false,
-    minVersion: "TLSv1.2"
-  },
-  connectionTimeout: 60000,
-  greetingTimeout: 60000,
-  socketTimeout: 60000,
-
-  // 🔥 FORCE IPv4 HARD
-  // lookup: (hostname, options, callback) => {
-  //   return dns.lookup(hostname, { family: 4, all: false }, callback);
-  // }
-});
-
+// ===============================
+// ROOT
+// ===============================
 app.get("/", (req, res) => {
   res.send("OTP Server Running 🚀");
 });
 
-// ✅ SEND OTP
+// ===============================
+// SEND OTP
+// ===============================
 app.post("/send-otp", async (req, res) => {
   const { email } = req.body;
 
   console.log("📩 Request received for:", email);
 
   if (!email) {
-    console.log("❌ Missing email");
     return res.status(400).json({ success: false, error: "Email required" });
   }
 
@@ -56,22 +38,22 @@ app.post("/send-otp", async (req, res) => {
 
   otpStore[email] = {
     otp,
-    expires: Date.now() + 5 * 60 * 1000 // 5 minutes
+    expires: Date.now() + 5 * 60 * 1000
   };
 
   console.log("🔐 Generated OTP:", otp);
 
-  // ✅ ALWAYS respond immediately (avoid Android timeout)
+  // ✅ Respond immediately
   res.json({ success: true });
 
-  // 🔥 Send email in background (non-blocking)
+  // 📧 Send email in background
   setImmediate(async () => {
     try {
-      console.log("🚀 Sending email (background)...");
+      console.log("🚀 Sending email via SendGrid...");
 
-      const info = await transporter.sendMail({
-        from: `"FaceRecgAI" <saikingfishr@gmail.com>`,
+      const msg = {
         to: email,
+        from: "saikingfishr@gmail.com", // must be verified in SendGrid
         subject: "Your OTP Code",
         text: `Your OTP is ${otp}`,
         html: `
@@ -81,20 +63,22 @@ app.post("/send-otp", async (req, res) => {
             <p>This OTP is valid for 5 minutes.</p>
           </div>
         `
-      });
+      };
 
-      console.log("✅ MAIL SENT:", info.response);
+      await sgMail.send(msg);
+
+      console.log("✅ EMAIL SENT");
 
     } catch (err) {
-      console.error("❌ EMAIL FAILED:", err.message);
-
-      // 🔥 fallback (important for debugging)
+      console.error("❌ EMAIL FAILED:", err.response?.body || err.message);
       console.log("⚠️ OTP (fallback):", otp);
     }
   });
 });
 
-// ✅ VERIFY OTP
+// ===============================
+// VERIFY OTP
+// ===============================
 app.post("/verify-otp", (req, res) => {
   const { email, otp } = req.body;
 
@@ -110,7 +94,7 @@ app.post("/verify-otp", (req, res) => {
   res.json({ success: false });
 });
 
-
+// ===============================
 app.listen(PORT, () => {
   console.log("Server running on " + PORT);
 });
