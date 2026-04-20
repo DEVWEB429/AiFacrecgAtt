@@ -8,8 +8,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
 // 🔐 SendGrid setup
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+// ✅ DEBUG LOG
+console.log(
+  "SENDGRID KEY STATUS:",
+  process.env.SENDGRID_API_KEY
+    ? "LOADED ✅ (" + process.env.SENDGRID_API_KEY.slice(0, 5) + "...)"
+    : "MISSING ❌"
+);
 
 // 🔥 TEMP STORAGE (use Redis/DB in production)
 const otpStore = {};
