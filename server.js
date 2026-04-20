@@ -74,9 +74,10 @@ app.post("/send-otp", async (req, res) => {
         `
       };
 
-      await sgMail.send(msg);
+    await sgMail.send(msg);
 
-      console.log("✅ EMAIL SENT");
+console.log("✅ EMAIL SENT TO:", email);
+console.log("📧 FROM:", msg.from);
 
     } catch (err) {
       console.error("❌ EMAIL FAILED:", err.response?.body || err.message);
